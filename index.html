@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Templates</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+    <div id="page">
+        
+        <div id="top">
+            <div>
+                <h1>Hi there! <i class="fas fa-clock"> </i>  <i class="fas fa-chevron-circle-left"></i>
+                </h1>
+            </div>
+            <ul>
+                <a href="#main-page-1" class="menu-link" id="page1"><li > </li> </a>
+                <a href="#main-page-2" class="menu-link" id="page2"><li > </li> </a>
+                <a href="#main-page-3" class="menu-link" id="page3"><li > </li> </a>
+                <a href="#main-page-4" class="menu-link" id="page4"><li > </li> </a>
+                <a href="#main-page-5" class="menu-link" id="page5"><li > </li> </a>
+            </ul>
+        </div>
+
+        <!-- Top  -->
+        <div id="menu">
+            <ul>
+                <a href="#main-page-1" class="menu-link" id="page1"><li > </li> </a>
+                <a href="#main-page-2" class="menu-link" id="page2"><li > </li> </a>
+                <a href="#main-page-3" class="menu-link" id="page3"><li > </li> </a>
+                <a href="#main-page-4" class="menu-link" id="page4"><li > </li> </a>
+                <a href="#main-page-5" class="menu-link" id="page5"><li > </li> </a>
+            </ul>
+        </div>
+        
+        <div class="main">
+            <!-- Page 1 Tab -->
+            <div class="main-page" id="main-page-1"  >
+            </div>
+
+            <!-- Page 2 Tab -->
+            <div class="main-page" id="main-page-2">
+                
+                <div id="page2-maincontent">
+                    <input type="text" class="template-area-title editing-item" id="template-textarea-title"></input type="text">
+                    <div class="template-area-title display-item" id="template-div-title"><p></p></div>
+                    <textarea class="template-area editing-item" type="text" id="template-textarea" rows="35" cols="70"></textarea>
+                    <div class="template-area display-item" id="template-div"><p></p></div>
+                    <button id="save" class="editing-item" >save</button>
+                    <button id="edit" class="display-item">edit</button>
+                <div>
+                </div>
+                <div id="page2-secondarycontent">
+                    <div id="suggestions">
+                        <div id="slider">
+                            </div>
+                            <button id="prev"></button>
+                            <button id="next"></button>
+                        </div>
+                        <div class="datetime-box" id="start-time-box">
+                            <label for="starttime">Start Time:</label>
+                            <div id="datenow">    
+                                <input type="date" class="input-datetime" id="start-date"></input>
+                                <input type="time" class="input-datetime" id="start-time" step="300"></input>
+                            </div>
+                            <button class="current-time" id="current-start-time"><i class="fas fa-clock" title="local time"></i></button>
+                            <input type="checkbox" class="input-datetime" id="start-time-check" checked></input>
+                        </div>
+                        <div class="datetime-box" id="end-time-box">
+                            <label for="starttime">End Time:</label>
+                            <div id="datenow">    
+                                <input type="date" class="input-datetime" id="end-date"></input>
+                                <input type="time" class="input-datetime" id="end-time" step="300"></input>
+                            </div>
+                            <button class="current-time" id="current-end-time"><i class="fas fa-clock" title="local time"></i></button>
+                            <input type="checkbox" class="input-datetime" id="end-time-check"></input>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                
+            <!-- Page 3 Tab -->
+            <div class="main-page" id="main-page-3">
+                THIS IS ANOTHER PAGE
+            </div>
+            
+            <!-- Page 4 Tab -->
+            <div class="main-page" id="main-page-4">
+                
+                <div>
+                    <div id="page4-maincontent">
+                        <input type="text" class="template-area-title editing-item" id="template-textarea-title" readonly></input type="text" required>
+                        <textarea class="template-area editing-item" type="text" id="template-textarea" rows="35" cols="70"></textarea>
+                    <div>
+
+                    <form action="">
+                        <label for="name">Name:</label>
+                        <input type="text" class="new-template-data" placeholder="Name"                 id="name"     required></input>
+                        <label for="urgency">Urgency:</label>
+                        <input type="text" class="new-template-data" placeholder="Emergency/Planned"    id="urgency"  required></input>
+                        <label for="location">Type:</label>
+                        <input type="text" class="new-template-data" placeholder="Atlanta/Boston"       id="location" required></input>
+                        <label for="type">Type:</label>
+                        <input type="text" class="new-template-data" placeholder="Initial/Final"        id="type"     required></input>
+                        <button id="create-btn">Create</button>
+                        <button type="button" id="disregard-btn">Discard Changes</button>
+                    </form>    
+                </div>
+            </div>
+            
+            <!-- Page 5 Tab -->
+            <div class="main-page" id="main-page-5">
+
+                <ul> what's next?
+                    <li>Including get method to obtain and convert different timezones (PST, ET and GMT)</li>
+                    <li>Making the calendar more user friendly</li>
+                    <li>Select Market checkbox</li>
+                <ul>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <!-- <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js" integrity="sha256-0YPKAwZP7Mp3ALMRVB2i8GXeEndvCq3eSl/WsAl1Ryk="   crossorigin="anonymous"></script> -->
+    <!-- <script src="https://code.jquery.com/ui/3.3.1/jquery-ui.js"></script> -->
+    <script src="script.js"></script>
+</body>
+</html>
