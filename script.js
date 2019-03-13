@@ -12,7 +12,7 @@ $(function(){
     let templates               = [];
     let lastTemplateID          = 0;
     let results                 = [];
-    // let matchArr                = [];
+    let matchResults            = [];
     
     // cache elements
     const links     = $('#top').find('.menu-link');
@@ -67,7 +67,7 @@ $(function(){
             return;
         results = templates.filter(searchTemplateMatches)
         results.forEach(x=>{
-            $searchResults.append(`<li><a href="#" class="list-item-search-result" id="${x[header]['ID']}"> <em> ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']}</em> </a> </li>`)
+            $searchResults.append(`<li><a href="#" class="list-item-search-result" id="${x[header]['ID']}"> ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']}</a> </li>`)
         });
     })
 
@@ -440,15 +440,13 @@ $(function(){
         //console.log('search keys',searchKeys)
         //console.log('min match', minMatch);
 
-        var count   = 0;
-        var id      = object[header].ID;
+        var count =0;
         var regex;
         for(var i =0; i<searchKeys.length;i++){
             regex = new RegExp(searchKeys[i],"i")
             for(var j=1; j<object.length;j++){
                 if(regex.test(object[j]['value'])){
                     count++;
-                    // matchArr[id] = object[j]['value'].match(regex);
                     // console.log(i,j,object[j]['value'])
                     // console.log('match',object[j]['value'],'for object', object)
                     break;
