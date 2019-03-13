@@ -44,7 +44,10 @@
 
             <!-- Page 2 Tab -->
             <div class="main-page" id="main-page-2">
-                
+                <div class="page2-top">
+                    <input id="search" type="text" placeholder="Search"/>
+                    <ul id="search-results"></ul>
+                </div>
                 <div id="page2-maincontent">
                     <input type="text" class="template-area-title editing-item" id="template-textarea-title"></input type="text">
                     <div class="template-area-title display-item" id="template-div-title"><p></p></div>
@@ -86,6 +89,10 @@
             <!-- Page 3 Tab -->
             <div class="main-page" id="main-page-3">
                 THIS IS ANOTHER PAGE
+                <input id="load" type="file" accept="application/json">
+                <button id="load">load</button>
+                <button id="download">download</button>
+                <button id="print">print</button>
             </div>
             
             <!-- Page 4 Tab -->
@@ -105,7 +112,7 @@
                         <label for="location">Type:</label>
                         <input type="text" class="new-template-data" placeholder="Atlanta/Boston"       id="location" required></input>
                         <label for="type">Type:</label>
-                        <input type="text" class="new-template-data" placeholder="Initial/Final"        id="type"     required></input>
+                        <input type="text" class="new-template-data" placeholder="Initial/Final"        id="type" ></input>
                         <button id="create-btn">Create</button>
                         <button type="button" id="disregard-btn">Discard Changes</button>
                     </form>    
@@ -119,6 +126,7 @@
                     <li>Including get method to obtain and convert different timezones (PST, ET and GMT)</li>
                     <li>Making the calendar more user friendly</li>
                     <li>Select Market checkbox</li>
+                    <li>Merging template list</li>
                 <ul>
             </div>
             

@@ -2,15 +2,20 @@
 //same as $(document).ready(function(){})
 $(function(){
     // constants
-    const timezone_replace_str  = '<<TIME VALUES GO HERE DO NOT DELETE>>';
+    const timezoneReplaceStr    = '<<TIME VALUES GO HERE DO NOT DELETE>>';
+    const startTimeStr          = "**Start Time:**";
+    const endTimeStr            = "**End Time:**";
+    const header                = 0;
 
     // variables
     let market                  = 'US';
     let templates               = [];
+    let lastTemplateID          = 0;
     
     // cache elements
     const links     = $('#top').find('.menu-link');
     const $page2    = $('#main-page-2');
+    const $page3    = $('#main-page-3');
     const $page4    = $('#main-page-4');
 
         // cache page 2
@@ -22,6 +27,13 @@ $(function(){
     const $endtime_input        = $page2.find('#end-time');
     const template_textArea     = document.getElementById('template-textarea'); 
     const template_div          = document.getElementById('template-div');
+    const $search               = $page2.find('#search');
+    const $searchResults        = $page2.find('#search-results');
+    const $searchBar_div        = $page3.find('.page2-top')
+
+        // cache page 3
+    const $loadFile             = $page3.find('#load');
+    const $download             = $page3.find('#download');
 
         // cache page 4
     const $name_inputTxt        = $page4.find('#name');
@@ -45,6 +57,19 @@ $(function(){
     })
     
     $page2.find(".editing-item").hide();
+
+    $search.on('keyup',(event)=>{
+        $searchResults.html('')
+        if(!$search.prop('value'))
+            return;
+        templates.filter(searchTemplateMatches).forEach(x=>{
+            $searchResults.append(`<li id="${x[header]['ID']}"> ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']} </li>`)
+        });
+    })
+
+    $searchBar_div.on('click','.list-item-search-result',(event)=>{
+        console.log(event);
+    });
 
     // setup elements, event handlers
     $('.menu-link').each((index, element) => {
@@ -86,6 +111,43 @@ $(function(){
         updateTextDiv();
     });
 
+      // page 2 Event handlers
+      
+    $page3.find('#print').on('click',()=> console.log(templates))
+      
+    $loadFile.on('click',()=>{
+        // console.log('clicked!')
+        $loadFile.prop('value',"");
+    })
+    
+    $loadFile.on('change',(event)=>{
+        var inputFile   = event.target.files[0];
+        var fileData    = new FileReader();
+        
+        if(!inputFile)
+            return;
+        
+        if (inputFile.type !== 'application/json'){
+            alert('ERROR: Wrong type of file!. Data should be stored in a .json file')
+            return
+        }
+        
+        fileData.onload = (e)=>{
+            templates = JSON.parse(e.target.result);
+            console.log(templates);
+        }
+        
+        fileData.onerror = (e)=>{ 
+            alert('there was an error loading data') 
+        }
+        fileData.readAsText(inputFile);
+        
+    });
+    
+      $download.on('click',()=>{
+        downloadObjectAsJson(templates, 'data');
+      });
+
       // page 4 Event handlers
     $page4.find('.new-template-data').on('input',()=>{
         updateNewTemplateTitle();
@@ -94,27 +156,32 @@ $(function(){
     $create_btn.on('click', (event)=>{
         //event.preventDefault();
         
-        if( !$name_inputTxt.prop('value')    ||  !$urgency_inputTxt.prop('value') ||
-            !$location_inputTxt.prop('value')||  !$type_inputTxt.prop('value') )
-              return;
+        if( !$name_inputTxt.prop('value') || !$urgency_inputTxt.prop('value') || !$location_inputTxt.prop('value') )
+            return;
         
         if (!$temp_textArea_create.prop('value')) {
             alert('Main text is missing, please fill out all fields');
             return;
         }
         
-        var newObject = inputsToObject($name_inputTxt, $urgency_inputTxt, $location_inputTxt, $type_inputTxt, $temp_textArea_create);
+        var newTemplate = [];
+        addTitlePropsToObject(newTemplate, $name_inputTxt, $urgency_inputTxt, $location_inputTxt, $type_inputTxt);
+        addTextInputToObject(newTemplate, $temp_textArea_create);
+
+        if (addNewTemplate(newTemplate, ++lastTemplateID)){
+            clearNewTemplateData();
+            updateNewTemplateTitle();
+            templates.push(newTemplate);
+            alert('Template added successfully!')
+        }else
+            alert('There was an error adding the template')
+        console.log(newTemplate);
     })
     
     $discard_changes_btn.on('click', (event)=>{
-      $name_inputTxt.prop('value','');
-      $urgency_inputTxt.prop('value','');
-      $location_inputTxt.prop('value','');
-      $type_inputTxt.prop('value','');
-      $temp_textArea_create.prop('value','');
-      
-      updateNewTemplateTitle();
-      console.log('changes discarded');
+        clearNewTemplateData();
+        updateNewTemplateTitle();
+        console.log('changes discarded');
     })
 
     // functions
@@ -130,17 +197,14 @@ $(function(){
         hour        = (parseInt(hour) % 12);
         hour        = (hour<10)? "0"+hour : hour.toString();
 
-        console.log(hour,min,period)
+        //console.log(hour,min,period)
 
         if(market==='US'){
-            return `\n${month}/${day}/${year} ${hour}:${min} ${period} ET\n`
+            return `\n${message_label} ${month}/${day}/${year} ${hour}:${min} ${period} ET\n`
         }else{
-            return `\n${day}/${month}/${year} ${hour}:${min} ${period} GMT\n`
+            return `\n${message_label} ${day}/${month}/${year} ${hour}:${min} ${period} GMT\n`
         }
 
-        // input_to_date = `\n${message_label} ${datestr} ${timestr}\n`;
-        // return input_to_date;
-        return `\n${message_label} ${datestr} ${timestr}\n`
     }
 
     function getTimeNow(roundToNearest5 = false){
@@ -177,19 +241,19 @@ $(function(){
         var timestamp   = '' 
 
         if($starttime_checkbox.prop('checked'))
-            timestamp+= inputToString('**Start Time:**', $startdate_input, $starttime_input);
+            timestamp+= inputToString(startTimeStr, $startdate_input, $starttime_input);
         if($endtime_checkbox.prop('checked'))
-            timestamp+= inputToString('**End Time:**', $enddate_input, $endtime_input);
+            timestamp+= inputToString(endTimeStr, $enddate_input, $endtime_input);
         // console.log(timestamp);
         return timestamp;
     }
 
     function updateTextDiv(){
-        console.log('updating div');
+        //console.log('updating div');
         var div_datetime = getUpdatedTimestamp();
         
         template_div.innerHTML = template_textArea.value
-        .replace(timezone_replace_str,div_datetime)
+        .replace(timezoneReplaceStr,div_datetime)
         .replace(/\n{3,}/g,'\n\n')
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
@@ -216,45 +280,175 @@ $(function(){
         $page4.find('#template-textarea-title').prop('value',data);
     }
 
-    /* Converts jQuery input component value into an object
+    /*
+    */ 
+    
+    function addTitlePropsToObject(...$args){
+        var [templateArr, ...$inputs]  = [...$args];
+        
+        var prop       = {};
+        
+        $inputs.forEach(input=>{
+            var key        = input.prop('id');
+            var value      = input.prop('value');
+            prop[key]      = value;
+        });
+        templateArr.push(prop);
+    }
+    
+    /* Converts jQuery input component value into an array of objects (properties)
         new lines should contain two data sets: they object key and value
           key   : Taken from the text that is surrounded by ** key ** or __ key __
           value : The rest of the data
     */
-    function inputsToObject(...$inputs){
-      var object = {};
-      var regex1  = /\*{2}.*\*{2}/g;
-      var regex2  = /_{2}.*_{2}/g;
-      
-      $inputs.forEach(input=>{
-        var str     = input.prop('value');
+    function addTextInputToObject(templateArr, $input){
+        var regex1  = /\*{2}.*\*{2}/g;
+        var regex2  = /_{2}.*_{2}/g;
+        var regex3  = /[-_]{3,}/g;
+        var regex4  = new RegExp(timezoneReplaceStr,"g");
+
+        var str     = $input.prop('value');
         var lines   = str.replace(/[\n\r]{2,}/g,'\n').split('\n');
-        
-        console.log('---------------')
+      
         lines.forEach((line,index)=>{
-        
-        if(!regex1.test(str) || !regex2.test(str)){
-          alert(`We were unable to add template. there was a problem in line:\n\n${line}`);
-          console.log(
-          `Please make sure every line one of the following formats:
-              ** key ** value
-              __ key __ value`);
-            return null;
-          }
-                        
-          var key   = str.match(regex1)[0] || str.match(regex2)[0];
-          var value = str.slice(key.length);
-        
-          console.log(key,value)
-          })
+            var key,value;
+            var prop = {}
+
+            if(!line)
+                return;
+            else if(regex1.test(line))
+                key = line.match(regex1)[0];
+            else if(regex2.test(line))
+                key = line.match(regex2)[0];
+            else if(regex3.test(line))
+                key = line.match(regex3)[0];
+            else if(regex4.test(line))
+                key = timezoneReplaceStr;
+            else{
+                alert(`A specific attribute was not included in the template. Problem in line ${index}:\n\n${line}`);
+                console.log(`Please make sure every line one of the following formats:
+                ** key ** value
+                __ key __ value`);
+                return null;
+            }
+            //console.log('line is'+line+'here');
+
+            prop['key']             = key;
+            prop['value']           = line.slice(key.length);
+            templateArr.push(prop) ;
         });
       
     }
-    
-    template_textArea.value = timezone_replace_str;
-    updateTextDiv();
 
+    function clearNewTemplateData(){
+        $name_inputTxt.prop('value','');
+        $urgency_inputTxt.prop('value','');
+        $location_inputTxt.prop('value','');
+        $type_inputTxt.prop('value','');
+        $temp_textArea_create.prop('value','');
+
+        $temp_textArea_create.prop('value', '\n'+timezoneReplaceStr+'\n');
+    }
+
+    function addNewTemplate(template, ID){
+        // creating a string of the most important information
+        // of the current object to then create a hash
+        var hash, match = [];
+        var tempBasicInfo   =   template[header]['urgency']+ 
+                                template[header]['location']+ 
+                                template[header]['type']+
+                                template.length;
+
+        template[header]["ID"]  = ID;
+
+        for (var propertyID =1; propertyID < template.length ; propertyID++){
+            tempBasicInfo += template[propertyID]['value'].length;
+        }
+
+        // check if there are already templates with that hash
+        // if so, check if all properties match.
+        template[header]['hash'] = createHash(tempBasicInfo);
+
+        templates.filter(temp => (temp[0]['hash'] == template[0]['hash']))
+        .forEach(temp=>{
+            for(var i = 1; i< temp; i++){
+                if(temp[i].value != template[i].value)
+                    return;
+            }
+            //match.push(temp);
+            match.push(temp[0].ID);
+        })
+
+        if (match.length){
+            console.log('Template IDs that match the current template: ',match);      
+            var proceed = confirm("There's already a template that has the same information, Do you still want to add this template?");
+            if (!proceed)
+                return false;
+        }
+        return true;
+    }
+
+    function createHash(str){
+        var hashcode = 0;
+        for (i=0;i<str.length;i++){
+            // 31 * i == (i << 5) - i
+            hashcode = ((hashcode << 5) - hashcode ) + str.charCodeAt(i);
+        }
+        return hashcode
+      }
+
+    function searchTemplateMatches(object){
+
+        var searchKeys = $search.prop('value').split(' ');
+        var minMatch   = Math.floor(searchKeys.length/2) || 1 ;
+
+        //console.log('search keys',searchKeys)
+        //console.log('min match', minMatch);
+
+        var count =0;
+        var regex;
+        for(var i =0; i<searchKeys.length;i++){
+            regex = new RegExp(searchKeys[i],"i")
+            for(var j=1; j<object.length;j++){
+                if(regex.test(object[j]['value'])){
+                    count++;
+                    // console.log(i,j,object[j]['value'])
+                    // console.log('match',object[j]['value'],'for object', object)
+                    break;
+                }
+            }
+        }
+        if (count>=minMatch)
+            return true;
+        return false;
+    }
+
+    // This function was obtained from:
+    // https://stackoverflow.com/questions/19721439/download-json-object-as-a-file-from-browser
+    function downloadObjectAsJson(exportObj, exportName){
+        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+        var downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href",     dataStr);
+        downloadAnchorNode.setAttribute("download", exportName + ".json");
+        document.body.appendChild(downloadAnchorNode); // required for firefox
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+      }
+
+
+
+
+
+
+
+
+
+    
+    template_textArea.value = '\n'+timezoneReplaceStr+'\n';
+    
+    updateTextDiv();
+    clearNewTemplateData();
     // for development
-    document.getElementById('page4').click();
+    document.getElementById('page2').click();
 
 })
