@@ -11,6 +11,8 @@ $(function(){
     let market                  = 'US';
     let templates               = [];
     let lastTemplateID          = 0;
+    let results                 = [];
+    // let matchArr                = [];
     
     // cache elements
     const links     = $('#top').find('.menu-link');
@@ -26,10 +28,11 @@ $(function(){
     const $enddate_input        = $page2.find('#end-date');
     const $endtime_input        = $page2.find('#end-time');
     const template_textArea     = document.getElementById('template-textarea'); 
+    const template_textArea_title=document.getElementById('template-textarea-title'); 
     const template_div          = document.getElementById('template-div');
+    const template_div_title    = document.getElementById('template-div-title');
     const $search               = $page2.find('#search');
     const $searchResults        = $page2.find('#search-results');
-    const $searchBar_div        = $page3.find('.page2-top')
 
         // cache page 3
     const $loadFile             = $page3.find('#load');
@@ -62,13 +65,42 @@ $(function(){
         $searchResults.html('')
         if(!$search.prop('value'))
             return;
-        templates.filter(searchTemplateMatches).forEach(x=>{
-            $searchResults.append(`<li id="${x[header]['ID']}"> ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']} </li>`)
+        results = templates.filter(searchTemplateMatches)
+        results.forEach(x=>{
+            $searchResults.append(`<li><a href="#" class="list-item-search-result" id="${x[header]['ID']}"> <em> ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']}</em> </a> </li>`)
         });
     })
 
-    $searchBar_div.on('click','.list-item-search-result',(event)=>{
-        console.log(event);
+    $searchResults.on('click','.list-item-search-result',(event)=>{
+        var temp, str='', titlestr='';
+        var regex1 = new RegExp(timezoneReplaceStr);
+        var regex2 = /[-_]{3,}/;
+        
+        $search.prop('value','');
+        $searchResults.html('');
+        
+        temp = results.filter(x=>{
+            if (x[header].ID == event.target.id)
+                return true;
+            return false;
+        })[0];
+        
+        titlestr = temp[header].name + ' ' +temp[header].urgency +' - '+ temp[header].location ;
+        if(temp[header].type)
+            titlestr += ' - '+ temp[header].type;
+
+        //textdata starts in 1
+        for (var i = 1; i<temp.length;i++){
+            if ( regex1.test(temp[i])|| regex2.test(temp[i]) )
+            str += '\n'+ temp[i]['key'] + '\n';
+            else
+            str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
+        }
+        
+        template_textArea_title.value   = titlestr;
+        template_textArea.value         = str;
+        updateTextDiv();
+
     });
 
     // setup elements, event handlers
@@ -97,7 +129,6 @@ $(function(){
     $page2.find('#template-textarea').on('change',x=> console.log('textarea changed'))
 
     $page2.find('.current-time').on('click', x=>{
-
         var [date, time] = getTimeNow(true);
 
         if(x.currentTarget.id === 'current-start-time'){
@@ -134,7 +165,7 @@ $(function(){
         
         fileData.onload = (e)=>{
             templates = JSON.parse(e.target.result);
-            console.log(templates);
+            //console.log(templates);
         }
         
         fileData.onerror = (e)=>{ 
@@ -144,9 +175,10 @@ $(function(){
         
     });
     
-      $download.on('click',()=>{
-        downloadObjectAsJson(templates, 'data');
-      });
+    $download.on('click',()=>{
+        var date = (new Date()).toJSON().replace(/[-/]/g,'').slice(0,8);
+        downloadObjectAsJson(templates, 'data-'+date);
+    });
 
       // page 4 Event handlers
     $page4.find('.new-template-data').on('input',()=>{
@@ -175,7 +207,7 @@ $(function(){
             alert('Template added successfully!')
         }else
             alert('There was an error adding the template')
-        console.log(newTemplate);
+        //console.log(newTemplate);
     })
     
     $discard_changes_btn.on('click', (event)=>{
@@ -214,7 +246,7 @@ $(function(){
         var year    = timenow.getFullYear();
         var month   = timenow.getMonth();
         var day     = timenow.getDate();
-        console.log(day)
+        //console.log(day)
         
         month   = (month<10)?"0"+month:month ;
         day     = (day<10)?"0"+day:day ;
@@ -249,7 +281,10 @@ $(function(){
     }
 
     function updateTextDiv(){
-        //console.log('updating div');
+        // update title
+        template_div_title.innerHTML = '<b>'+ template_textArea_title.value + '</b>'
+
+        // update div
         var div_datetime = getUpdatedTimestamp();
         
         template_div.innerHTML = template_textArea.value
@@ -380,7 +415,7 @@ $(function(){
         })
 
         if (match.length){
-            console.log('Template IDs that match the current template: ',match);      
+            // console.log('Template IDs that match the current template: ',match);      
             var proceed = confirm("There's already a template that has the same information, Do you still want to add this template?");
             if (!proceed)
                 return false;
@@ -405,13 +440,15 @@ $(function(){
         //console.log('search keys',searchKeys)
         //console.log('min match', minMatch);
 
-        var count =0;
+        var count   = 0;
+        var id      = object[header].ID;
         var regex;
         for(var i =0; i<searchKeys.length;i++){
             regex = new RegExp(searchKeys[i],"i")
             for(var j=1; j<object.length;j++){
                 if(regex.test(object[j]['value'])){
                     count++;
+                    // matchArr[id] = object[j]['value'].match(regex);
                     // console.log(i,j,object[j]['value'])
                     // console.log('match',object[j]['value'],'for object', object)
                     break;
