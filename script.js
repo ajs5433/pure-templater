@@ -37,6 +37,7 @@ $(function(){
     const template_div_title    = document.getElementById('template-div-title');
     const $search               = $page2.find('#search');
     const $searchResults        = $page2.find('#search-results');
+    const copyToClipboard       = document.getElementById('copy-to-clipboard');
 
         // cache page 3
     const $loadFile             = $page3.find('#load');
@@ -48,8 +49,8 @@ $(function(){
     const $urgency_inputTxt     = $page4.find('#urgency');
     const $location_inputTxt    = $page4.find('#location');
     const $type_inputTxt        = $page4.find('#type');
-    const $marketUS_radio       = $page4.find('.market-radio-btn [value="US"]');
-    const $marketEU_radio       = $page4.find('.market-radio-btn [value="EU"]');
+    // const $marketUS_radio       = $page4.find('.market-radio-btn [value="US"]');
+    // const $marketEU_radio       = $page4.find('.market-radio-btn [value="EU"]');
     const $create_btn           = $page4.find('#create-btn');
     const $discard_changes_btn  = $page4.find('#disregard-btn');
     const $temp_textArea_create = $page4.find('#template-textarea'); 
@@ -75,6 +76,7 @@ $(function(){
         results = templates.filter(searchTemplateMatches)
         results.forEach(x=>{
             $searchResults.append(`<li><a href="#" class="list-item-search-result" id="${x[header]['ID']}"> ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']}</a> </li>`)
+            // $searchResults.append(`<a href="#" class="list-item-search-result" id="${x[header]['ID']}" ><li > ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']} </li> </a>`)
         });
     })
 
@@ -84,7 +86,7 @@ $(function(){
         var regex3 = new RegExp(marketReplaceStr,'g');
         var regex2 = /[-_]{3,}/;
 
-        console.log(regex1, regex3)
+        //console.log(regex1, regex3)
         
         $search.prop('value','');
         $searchResults.html('');
@@ -101,7 +103,7 @@ $(function(){
 
         //textdata starts in 1
         for (var i = 1; i<temp.length;i++){
-            console.log('key',temp[i]['key']);
+            //console.log('key',temp[i]['key']);
 
             if ( regex1.test(temp[i]['key']) || regex2.test(temp[i]['key']) )
                 str += '\n'+ temp[i]['key'] + '\n';
@@ -113,7 +115,7 @@ $(function(){
                 str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
         }
         
-        str += '\n'+"__ID:__" + temp[header].ID+'\n';
+        str += '\n'+"__ID:__ " + temp[header].ID+'\n';
 
         template_textArea_title.value   = titlestr;
         template_textArea.value         = str;
@@ -159,10 +161,29 @@ $(function(){
         updateTextDiv();
     });
 
-      // page 2 Event handlers
+
+    template_div.addEventListener('click',x=>{
+        copyElementData(template_textArea, true);
+    })
+    
+    template_div_title.addEventListener('click',x=>{
+        copyElementData(template_textArea_title, false);
+    })
+      // page 3 Event handlers
       
     $page3.find('#print').on('click',()=> console.log(templates))
-      
+    
+    $templateList_div.on('click','.page3-line-btn',(event)=>{
+        var name    = event.target.dataset.name;
+        var id      = event.target.dataset.id;
+        if (name=='open')
+            openTemplate(id);
+        else if(name=='remove')
+            removeTemplate(id);
+        else 
+            editTemplate(id);
+    })
+
     $loadFile.on('click',()=>{
         // console.log('clicked!')
         $loadFile.prop('value',"");
@@ -182,6 +203,7 @@ $(function(){
         
         fileData.onload = (e)=>{
             templates = JSON.parse(e.target.result);
+            $templateList_div.html('');
             if (templates.length>0)
                 templates.forEach(updateTemplateList);
         }
@@ -340,7 +362,7 @@ $(function(){
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
-        .replace(/__(.*?)__/g,"<mark>$1</mark>")
+        .replace(/``(.*?)``/g,"<mark>$1</mark>")
         .replace(/(_{5,}|-{5,})/g,"<hr>")
         .replace(/[\n\r]/g,'<br>')
     }
@@ -410,7 +432,7 @@ $(function(){
                 alert(`A specific attribute was not included in the template. Problem in line ${index}:\n\n${line}`);
                 console.log(`Please make sure every line one of the following formats:
                 ** key ** value
-                __ key __ value`);
+                `` key `` value`);
                 return null;
             }
             //console.log('line is'+line+'here');
@@ -482,7 +504,7 @@ $(function(){
       }
 
     function searchTemplateMatches(object){
-
+        var searchInTitle = true;
         var searchKeys = $search.prop('value').split(' ');
         var minMatch   = Math.floor(searchKeys.length/2) || 1 ;
 
@@ -496,18 +518,29 @@ $(function(){
             for(var j=1; j<object.length;j++){
                 if(regex.test(object[j]['value'])){
                     count++;
-                    // console.log(i,j,object[j]['value'])
-                    // console.log('match',object[j]['value'],'for object', object)
                     break;
                 }
             }
         }
+
+        if(searchInTitle){
+            var values = Object.values(object[header]);
+            for(var i =0; i<searchKeys.length;i++){
+                regex = new RegExp(searchKeys[i],"i");
+                if(regex.test(values)){
+                    count++;
+                    break;
+                }
+            }
+        }
+
         if (count>=minMatch)
             return true;
         return false;
     }
 
     function updateTemplateList(template){
+                                                                                                      
         var tempIdStr; 
         var tempId          =   template[header].ID;
         var tempTitle       =   template[header]['name']        + ' ' +
@@ -526,16 +559,16 @@ $(function(){
             default: tempIdStr = tempId; break;
         }
 
-        var templateHTML =  '<div id="page3-line">'                                                                                                     +
-                                '<div>'                                                                                                                 +
-                                    '<span id="page3-ID">'+tempIdStr+' </span> <span>'+tempTitle+'</span>'                                              +
-                                '</div>'                                                                                                                +
-                                '<div>'                                                                                                                 +
-                                    '<button class="page3-line-btn" title="open"   data-id="'+tempId+'"><i class="far fa-folder-open" ></i></button>'   + 
-                                    '<button class="page3-line-btn" title="edit"   data-id="'+tempId+'"><i class="far fa-edit"        ></i></button>'   + 
-                                    '<button class="page3-line-btn" title="remove" data-id="'+tempId+'"><i class="far fa-window-close"></i></button>'   +
-                                '</div>'                                                                                                                +
-                            '</div>'                                                                                                
+        var templateHTML =  '<div id="page3-line">'                                                                                                                                             +
+                                '<div>'                                                                                                                                                         +
+                                    '<span id="page3-ID">'+tempIdStr+' </span> <span>'+tempTitle+'</span>'                                                                                      +
+                                '</div>'                                                                                                                                                        +
+                                '<div>'                                                                                                                                                         +
+                                    '<button class="page3-line-btn" title="open"   data-id="'+tempId+'"><i data-name="open"   data-id="'+tempId+'"class="far fa-folder-open" ></i></button>'    + 
+                                    '<button class="page3-line-btn" title="edit"   data-id="'+tempId+'"><i data-name="edit"   data-id="'+tempId+'"class="far fa-edit"        ></i></button>'    + 
+                                    '<button class="page3-line-btn" title="remove" data-id="'+tempId+'"><i data-name="remove" data-id="'+tempId+'"class="far fa-window-close"></i></button>'    +
+                                '</div>'                                                                                                                                                        +
+                            '</div>'  
         $templateList_div.append(templateHTML);
         
     }
@@ -550,17 +583,88 @@ $(function(){
         document.body.appendChild(downloadAnchorNode); // required for firefox
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
-      }
+    }
 
+    function copyElementData(element, needsConversion){
+        var copy = ''
 
-
-
-
-
-
-
-
+        // update copy element
+        if(needsConversion){
+            var div_datetime = getUpdatedTimestamp();
+            var div_market   = getUpdatedMarket();
+            
+            copy = element.value
+            .replace(timezoneReplaceStr,div_datetime)
+            .replace(marketReplaceStr,div_market)
+            .replace(/\n{3,}/g,'\n\n')
+            .replace(/``(.*)``.*/g,'')
+        }else
+            copy = element.value;
+       
+        navigator.clipboard.writeText(copy).then(function() {
+          /* clipboard successfully set */
+        }, function() {
+          /* clipboard write failed */
+        });
+    }
     
+
+    function openTemplate(id){
+        console.log('Opening '+id);
+        var temp, str='', titlestr='';
+        var regex1 = new RegExp(timezoneReplaceStr,"g");
+        var regex3 = new RegExp(marketReplaceStr,'g');
+        var regex2 = /[-_]{3,}/;
+
+        temp = templates.filter(x=>{
+            if (x[header].ID == id)
+                return true;
+            return false;
+        })[0];
+        
+        document.getElementById('page2').click();
+
+        titlestr = temp[header].name + ' ' +temp[header].urgency +' - '+ temp[header].location ;
+        if(temp[header].type)
+            titlestr += ' - '+ temp[header].type;
+
+        for (var i = 1; i<temp.length;i++){
+            if ( regex1.test(temp[i]['key']) || regex2.test(temp[i]['key']) )
+                str += '\n'+ temp[i]['key'] + '\n';
+            else if(regex3.test(temp[i]['key'])){
+                str += '\n'+ temp[i]['key'] + '\n';
+                market = temp[i]['value'].replace(/\s/g,'');
+            }
+            else
+                str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
+        }
+        
+        str += '\n'+"__ID:__ " + temp[header].ID+'\n';
+        console.log(titlestr,str)
+        template_textArea_title.value   = titlestr;
+        template_textArea.value         = str;
+        updateTextDiv();
+    }
+
+    function removeTemplate(id){
+        $templateList_div.html('');
+        console.log('Removing '+id);
+        var newTemplates = [];
+        for(var i =0; i<templates.length;i++){
+            if(templates[i][header].ID == id)
+                continue;
+            newTemplates.push(templates[i]);
+        }
+
+        templates = newTemplates;
+        templates.forEach(updateTemplateList);
+    }
+
+    function editTemplate(id){
+        console.log('Editing '+id);
+        // document.getElementById('page6').click();
+    }
+        
     template_textArea.value = '\n'+timezoneReplaceStr+'\n\n'+marketReplaceStr+'\n';
     
     updateTextDiv();

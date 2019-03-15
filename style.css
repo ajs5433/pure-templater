@@ -185,6 +185,11 @@ textarea{
     padding: 10px;
 }
 
+#template-div-title:hover,
+#template-div{
+    cursor:pointer;
+}
+
 /*
 #page2-secondarycontent{
     border: solid 1px var(--border-color);
@@ -349,6 +354,9 @@ textarea{
 }
 
 
+.list-item-search-result{
+    width: 100%;
+}
 .hidden{
     display:none !important;
 }
