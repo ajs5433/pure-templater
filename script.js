@@ -113,6 +113,8 @@ $(function(){
                 str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
         }
         
+        str += '\n'+"__ID:__" + temp[header].ID+'\n';
+
         template_textArea_title.value   = titlestr;
         template_textArea.value         = str;
         updateTextDiv();
