@@ -2,9 +2,11 @@
 //same as $(document).ready(function(){})
 $(function(){
     // constants
-    const timezoneReplaceStr    = '<<TIME VALUES GO HERE DO NOT DELETE>>';
+    const timezoneReplaceStr    = '<< TIME VALUES >>';
+    const marketReplaceStr      = '<< MARKET >>';
     const startTimeStr          = "**Start Time:**";
     const endTimeStr            = "**End Time:**";
+    const marketStr             = "**Market:**";
     const header                = 0;
 
     // variables
@@ -15,7 +17,8 @@ $(function(){
     let matchResults            = [];
     
     // cache elements
-    const links     = $('#top').find('.menu-link');
+    const $links    = $('#top').find('.menu-link');
+    const $main_pages = $('.main-page');
     const $page2    = $('#main-page-2');
     const $page3    = $('#main-page-3');
     const $page4    = $('#main-page-4');
@@ -23,6 +26,7 @@ $(function(){
         // cache page 2
     const $starttime_checkbox   = $page2.find('#start-time-check');
     const $endtime_checkbox     = $page2.find('#end-time-check');
+    const $market_checkbox      = $page2.find('#market-check');
     const $startdate_input      = $page2.find('#start-date');
     const $starttime_input      = $page2.find('#start-time');
     const $enddate_input        = $page2.find('#end-date');
@@ -37,18 +41,21 @@ $(function(){
         // cache page 3
     const $loadFile             = $page3.find('#load');
     const $download             = $page3.find('#download');
+    const $templateList_div     = $page3.find('.page3-center');
 
         // cache page 4
     const $name_inputTxt        = $page4.find('#name');
     const $urgency_inputTxt     = $page4.find('#urgency');
     const $location_inputTxt    = $page4.find('#location');
     const $type_inputTxt        = $page4.find('#type');
+    const $marketUS_radio       = $page4.find('.market-radio-btn [value="US"]');
+    const $marketEU_radio       = $page4.find('.market-radio-btn [value="EU"]');
     const $create_btn           = $page4.find('#create-btn');
     const $discard_changes_btn  = $page4.find('#disregard-btn');
     const $temp_textArea_create = $page4.find('#template-textarea'); 
     
     // var current_page = links.getElementsByClassName('menu-link')[0].id
-    var current_page = links[0].id
+    var current_page = $links[0].id
     
     // setup visual content
     const pageIDs   = ['#page1','#page2','#page3','#page4','#page5'];
@@ -73,8 +80,11 @@ $(function(){
 
     $searchResults.on('click','.list-item-search-result',(event)=>{
         var temp, str='', titlestr='';
-        var regex1 = new RegExp(timezoneReplaceStr);
+        var regex1 = new RegExp(timezoneReplaceStr,"g");
+        var regex3 = new RegExp(marketReplaceStr,'g');
         var regex2 = /[-_]{3,}/;
+
+        console.log(regex1, regex3)
         
         $search.prop('value','');
         $searchResults.html('');
@@ -91,10 +101,16 @@ $(function(){
 
         //textdata starts in 1
         for (var i = 1; i<temp.length;i++){
-            if ( regex1.test(temp[i])|| regex2.test(temp[i]) )
-            str += '\n'+ temp[i]['key'] + '\n';
+            console.log('key',temp[i]['key']);
+
+            if ( regex1.test(temp[i]['key']) || regex2.test(temp[i]['key']) )
+                str += '\n'+ temp[i]['key'] + '\n';
+            else if(regex3.test(temp[i]['key'])){
+                str += '\n'+ temp[i]['key'] + '\n';
+                market = temp[i]['value'].replace(/\s/g,'');
+            }
             else
-            str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
+                str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
         }
         
         template_textArea_title.value   = titlestr;
@@ -103,14 +119,12 @@ $(function(){
 
     });
 
-    // setup elements, event handlers
-    $('.menu-link').each((index, element) => {
-        let elementID    = element.id;
-        window.addEventListener('resize',(event)=>{
-            links.filter((idx,elem)=>{elem.id===current_page}).click();
-            // links.getElementById(current_page).click();
-        })        
-    });
+    $('.menu-link').on('click',element=>{
+        var id = "#main-page-"+element.target.id.slice(4);
+        $('.main-page').addClass('hidden');
+        $(id).removeClass('hidden');
+    })
+
       // page 2 Event handlers
     $page2.find('#save').on('click', function(){
         updateTextDiv();
@@ -125,6 +139,7 @@ $(function(){
     })
     
     $page2.find('.input-datetime').on('input',x=> updateTextDiv());
+    $page2.find('.input-market').on('input',x=> updateTextDiv());
     // $page2.find('.input-datetime').on('change',x=> console.log('I changed!'));
     $page2.find('#template-textarea').on('change',x=> console.log('textarea changed'))
 
@@ -165,14 +180,14 @@ $(function(){
         
         fileData.onload = (e)=>{
             templates = JSON.parse(e.target.result);
-            //console.log(templates);
+            if (templates.length>0)
+                templates.forEach(updateTemplateList);
         }
         
         fileData.onerror = (e)=>{ 
             alert('there was an error loading data') 
         }
         fileData.readAsText(inputFile);
-        
     });
     
     $download.on('click',()=>{
@@ -188,19 +203,19 @@ $(function(){
     $create_btn.on('click', (event)=>{
         //event.preventDefault();
         
-        if( !$name_inputTxt.prop('value') || !$urgency_inputTxt.prop('value') || !$location_inputTxt.prop('value') )
+        if( !$name_inputTxt.prop('value') || !$urgency_inputTxt.prop('value') || !$location_inputTxt.prop('value') || !$page4.find('input:radio:checked').val())
             return;
         
         if (!$temp_textArea_create.prop('value')) {
             alert('Main text is missing, please fill out all fields');
             return;
         }
-        
+        var tempMarket = $page4.find('input:radio:checked').val();
         var newTemplate = [];
         addTitlePropsToObject(newTemplate, $name_inputTxt, $urgency_inputTxt, $location_inputTxt, $type_inputTxt);
         addTextInputToObject(newTemplate, $temp_textArea_create);
 
-        if (addNewTemplate(newTemplate, ++lastTemplateID)){
+        if (addNewTemplate(newTemplate, ++lastTemplateID, tempMarket)){
             clearNewTemplateData();
             updateNewTemplateTitle();
             templates.push(newTemplate);
@@ -214,6 +229,21 @@ $(function(){
         clearNewTemplateData();
         updateNewTemplateTitle();
         console.log('changes discarded');
+    })
+
+    $('#main-page-4').find('.market-radio-btn').on('click',x=>{
+        var thisMarket = x.target.value;
+        var regex = new RegExp(marketReplaceStr+'.*',"g");
+        // console.log(regex)
+        var val     = $temp_textArea_create.prop('value');
+        var newVal  =  marketReplaceStr+" "+thisMarket;
+        $temp_textArea_create.prop('value',val.replace(regex,newVal));
+            
+    })
+
+    $page2.find('.page2-choose-market').on('click', x=> {
+        market = x.target.dataset.market;
+        updateTextDiv();
     })
 
     // functions
@@ -279,6 +309,16 @@ $(function(){
         // console.log(timestamp);
         return timestamp;
     }
+    
+    function getUpdatedMarket(){
+        //console.log($market_checkbox.prop('checked'))
+
+        var marketReturnStr = '';
+        if($market_checkbox.prop('checked'))
+            marketReturnStr = marketStr+" "+market;  
+
+        return marketReturnStr;
+    }
 
     function updateTextDiv(){
         // update title
@@ -286,9 +326,11 @@ $(function(){
 
         // update div
         var div_datetime = getUpdatedTimestamp();
+        var div_market   = getUpdatedMarket();
         
         template_div.innerHTML = template_textArea.value
         .replace(timezoneReplaceStr,div_datetime)
+        .replace(marketReplaceStr,div_market)
         .replace(/\n{3,}/g,'\n\n')
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
@@ -341,6 +383,7 @@ $(function(){
         var regex2  = /_{2}.*_{2}/g;
         var regex3  = /[-_]{3,}/g;
         var regex4  = new RegExp(timezoneReplaceStr,"g");
+        var regex5  = new RegExp(marketReplaceStr,"g");
 
         var str     = $input.prop('value');
         var lines   = str.replace(/[\n\r]{2,}/g,'\n').split('\n');
@@ -359,6 +402,8 @@ $(function(){
                 key = line.match(regex3)[0];
             else if(regex4.test(line))
                 key = timezoneReplaceStr;
+            else if(regex5.test(line))
+                key = marketReplaceStr;
             else{
                 alert(`A specific attribute was not included in the template. Problem in line ${index}:\n\n${line}`);
                 console.log(`Please make sure every line one of the following formats:
@@ -382,16 +427,18 @@ $(function(){
         $type_inputTxt.prop('value','');
         $temp_textArea_create.prop('value','');
 
-        $temp_textArea_create.prop('value', '\n'+timezoneReplaceStr+'\n');
+        $temp_textArea_create.prop('value', '\n'+timezoneReplaceStr+'\n\n'+marketReplaceStr+'\n');
     }
 
-    function addNewTemplate(template, ID){
+    function addNewTemplate(template, ID, tempMarket){
         // creating a string of the most important information
         // of the current object to then create a hash
         var hash, match = [];
+ 
         var tempBasicInfo   =   template[header]['urgency']+ 
                                 template[header]['location']+ 
                                 template[header]['type']+
+                                tempMarket+
                                 template.length;
 
         template[header]["ID"]  = ID;
@@ -458,6 +505,39 @@ $(function(){
         return false;
     }
 
+    function updateTemplateList(template){
+        var tempIdStr; 
+        var tempId          =   template[header].ID;
+        var tempTitle       =   template[header]['name']        + ' ' +
+                                template[header]['urgency']     + ' - ' +
+                                template[header]['location'];
+                                
+        if (template[header]['type'])
+            tempTitle+=' - '+template[header]['type'];
+        tempTitle += '  ('+template[header][marketReplaceStr]+')';
+
+        switch(template[header].ID.toString.length){
+            case 1: tempIdStr = "    " + tempId; break;
+            case 2: tempIdStr = "   "  + tempId; break;
+            case 3: tempIdStr = "  "   + tempId; break;
+            case 4: tempIdStr = " "    + tempId; break;
+            default: tempIdStr = tempId; break;
+        }
+
+        var templateHTML =  '<div id="page3-line">'                                                                                                     +
+                                '<div>'                                                                                                                 +
+                                    '<span id="page3-ID">'+tempIdStr+' </span> <span>'+tempTitle+'</span>'                                              +
+                                '</div>'                                                                                                                +
+                                '<div>'                                                                                                                 +
+                                    '<button class="page3-line-btn" title="open"   data-id="'+tempId+'"><i class="far fa-folder-open" ></i></button>'   + 
+                                    '<button class="page3-line-btn" title="edit"   data-id="'+tempId+'"><i class="far fa-edit"        ></i></button>'   + 
+                                    '<button class="page3-line-btn" title="remove" data-id="'+tempId+'"><i class="far fa-window-close"></i></button>'   +
+                                '</div>'                                                                                                                +
+                            '</div>'                                                                                                
+        $templateList_div.append(templateHTML);
+        
+    }
+
     // This function was obtained from:
     // https://stackoverflow.com/questions/19721439/download-json-object-as-a-file-from-browser
     function downloadObjectAsJson(exportObj, exportName){
@@ -479,11 +559,11 @@ $(function(){
 
 
     
-    template_textArea.value = '\n'+timezoneReplaceStr+'\n';
+    template_textArea.value = '\n'+timezoneReplaceStr+'\n\n'+marketReplaceStr+'\n';
     
     updateTextDiv();
     clearNewTemplateData();
     // for development
-    document.getElementById('page2').click();
+    document.getElementById('page4').click();
 
 })
