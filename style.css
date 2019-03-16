@@ -210,6 +210,11 @@ textarea{
     border:none;
 }
 
+#incident-txtbox{
+    line-height:20px;
+    border: solid 1px var(--border-color);
+}
+
 #datenow{
     border: solid 1px var(--border-color);
 }
@@ -247,6 +252,8 @@ textarea{
     color: black;
     font-size: 14px;
 }
+
+
 
 #slider{
     border: solid 1px black;

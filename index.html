@@ -56,6 +56,10 @@
                                 <button class="slider-btn page2-btn" id="next"><i class="fas fa-chevron-right"></i></button>
                         </div>
                         -->
+                            <div class="datetime-box" id="incident">
+                                <label for="starttime">Incident:</label>
+                                <input type="text" class="input-datetime" id="incident-txtbox" maxlength="10"></input>
+                            </div>
                             <div class="datetime-box" id="start-time-box">
                                 <input type="checkbox" class="input-datetime" id="start-time-check" checked></input>
                                 <label for="starttime">Start Time:</label>
@@ -103,7 +107,7 @@
             
             <!-- Page 4 Tab -->
             <div class="main-page" id="main-page-4"> 
-                <h2>     new templates</h2>
+                <h2 id="page4-title"> new templates </h2>
                 <div id="page4-center">
                     <div id="page4-maincontent">
                         <input type="text" class="template-area-title editing-item" id="template-textarea-title" readonly></input type="text" required>
@@ -129,11 +133,12 @@
                             </div>
                             <form id="page4-form" action="">
                                 <div class="page4-block">
-                                    <label><input class="market-radio-btn" type="radio" name="market" value="US" required>US</label>
-                                    <label><input class="market-radio-btn" type="radio" name="market" value="EU">EU</label>
+                                    <label><input id="page4-us-rb" class="market-radio-btn" type="radio" name="market" value="US" required>US</label>
+                                    <label><input id="page4-eu-rb" class="market-radio-btn" type="radio" name="market" value="EU">EU</label>
                                 </div>
                             </form>
                             <button id="create-btn">Create</button>
+                            <button id="save-btn" class="hidden">Save</button>
                             <button type="button" id="disregard-btn">Discard Changes</button>
                         </div>
                     </form>    
@@ -145,6 +150,7 @@
             <div class="main-page" id="main-page-5">
 
                 <ul> what's next?
+                    <li>Including Warnings!! e.g. Warning!! start time of this template has already passed</li>
                     <li>Including get method to obtain and convert different timezones (PST, ET and GMT)</li>
                     <li>Making the calendar more user friendly</li>
                     <li>Select Market checkbox</li>

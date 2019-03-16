@@ -15,6 +15,10 @@ $(function(){
     let lastTemplateID          = 0;
     let results                 = [];
     let matchResults            = [];
+    let edit_header             = 'edit template'
+    let save_header             = 'new templates'
+    let editing                 = false;
+    let editingTemp             = null;
     
     // cache elements
     const $links    = $('#top').find('.menu-link');
@@ -37,7 +41,8 @@ $(function(){
     const template_div_title    = document.getElementById('template-div-title');
     const $search               = $page2.find('#search');
     const $searchResults        = $page2.find('#search-results');
-    const copyToClipboard       = document.getElementById('copy-to-clipboard');
+    const $incident_textbox     = $page2.find('#incident-txtbox');
+    //const copyToClipboard       = document.getElementById('copy-to-clipboard');
 
         // cache page 3
     const $loadFile             = $page3.find('#load');
@@ -49,9 +54,9 @@ $(function(){
     const $urgency_inputTxt     = $page4.find('#urgency');
     const $location_inputTxt    = $page4.find('#location');
     const $type_inputTxt        = $page4.find('#type');
-    // const $marketUS_radio       = $page4.find('.market-radio-btn [value="US"]');
-    // const $marketEU_radio       = $page4.find('.market-radio-btn [value="EU"]');
     const $create_btn           = $page4.find('#create-btn');
+    const $save_btn             = $page4.find('#save-btn');
+    const $page4_header         = $page4.find('#page4-title');
     const $discard_changes_btn  = $page4.find('#disregard-btn');
     const $temp_textArea_create = $page4.find('#template-textarea'); 
     
@@ -79,7 +84,7 @@ $(function(){
             // $searchResults.append(`<a href="#" class="list-item-search-result" id="${x[header]['ID']}" ><li > ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']} </li> </a>`)
         });
     })
-
+    
     $searchResults.on('click','.list-item-search-result',(event)=>{
         var temp, str='', titlestr='';
         var regex1 = new RegExp(timezoneReplaceStr,"g");
@@ -97,7 +102,11 @@ $(function(){
             return false;
         })[0];
         
-        titlestr = temp[header].name + ' ' +temp[header].urgency +' - '+ temp[header].location ;
+        $incident_textbox.val('');
+        
+        titlestr = temp[header].name + ' ' +temp[header].urgency;
+        if(temp[header].location)
+            titlestr += ' - '+ temp[header].location;
         if(temp[header].type)
             titlestr += ' - '+ temp[header].type;
 
@@ -115,7 +124,7 @@ $(function(){
                 str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
         }
         
-        str += '\n'+"__ID:__ " + temp[header].ID+'\n';
+        str += '\n'+"``ID:`` " + temp[header].ID+'\n';
 
         template_textArea_title.value   = titlestr;
         template_textArea.value         = str;
@@ -127,6 +136,13 @@ $(function(){
         var id = "#main-page-"+element.target.id.slice(4);
         $('.main-page').addClass('hidden');
         $(id).removeClass('hidden');
+        if(editing)
+            revertChanges();
+        
+        if(id=="#main-page-3"){
+            $templateList_div.html('');
+            templates.forEach(updateTemplateList);
+        }
     })
 
       // page 2 Event handlers
@@ -206,6 +222,13 @@ $(function(){
             $templateList_div.html('');
             if (templates.length>0)
                 templates.forEach(updateTemplateList);
+            
+            lastTemplateID = 0;
+            templates.forEach(x=>{
+                if(x[header].ID>lastTemplateID)
+                    lastTemplateID = x[header].ID;
+            });
+            
         }
         
         fileData.onerror = (e)=>{ 
@@ -224,30 +247,56 @@ $(function(){
         updateNewTemplateTitle();
     })
     
-    $create_btn.on('click', (event)=>{
-        //event.preventDefault();
+    $save_btn.on('click', (event)=>{
+        var old_templates, prev_temp;
+        var id          = editingTemp;
         
+        console.log(templates.length);
+        
+        templates = templates.filter(x=>{
+            if (x[header].ID == id){
+                prev_temp = x;
+                return false;
+            }
+            return true;
+        });
+        console.log(templates.length);
+        
+        if(!createEditTemplate(event, id))
+            templates.push(prev_temp);
+        
+        console.log(templates.length);
+        //revertChanges();
+    })
+    
+    $create_btn.on('click', (event)=>{
+        createEditTemplate(event, ++lastTemplateID);
+    })
+    
+    function createEditTemplate(event, id){
         if( !$name_inputTxt.prop('value') || !$urgency_inputTxt.prop('value') || !$location_inputTxt.prop('value') || !$page4.find('input:radio:checked').val())
-            return;
+            return false;
         
         if (!$temp_textArea_create.prop('value')) {
             alert('Main text is missing, please fill out all fields');
-            return;
+            return false;
         }
         var tempMarket = $page4.find('input:radio:checked').val();
         var newTemplate = [];
+        
         addTitlePropsToObject(newTemplate, $name_inputTxt, $urgency_inputTxt, $location_inputTxt, $type_inputTxt);
         addTextInputToObject(newTemplate, $temp_textArea_create);
 
-        if (addNewTemplate(newTemplate, ++lastTemplateID, tempMarket)){
+        if (addNewTemplate(newTemplate, id, tempMarket)){
             clearNewTemplateData();
             updateNewTemplateTitle();
             templates.push(newTemplate);
             alert('Template added successfully!')
+            return true;
         }else
-            alert('There was an error adding the template')
-        //console.log(newTemplate);
-    })
+            alert('There was an error adding the template');
+        return false;
+    }
     
     $discard_changes_btn.on('click', (event)=>{
         clearNewTemplateData();
@@ -346,7 +395,7 @@ $(function(){
 
     function updateTextDiv(){
         // update title
-        template_div_title.innerHTML = '<b>'+ template_textArea_title.value + '</b>'
+        template_div_title.innerHTML = '<b>'+template_textArea_title.value + '</b>'
 
         // update div
         var div_datetime = getUpdatedTimestamp();
@@ -404,7 +453,7 @@ $(function(){
     */
     function addTextInputToObject(templateArr, $input){
         var regex1  = /\*{2}.*\*{2}/g;
-        var regex2  = /_{2}.*_{2}/g;
+        var regex2  = /`{2}.*`{2}/g;
         var regex3  = /[-_]{3,}/g;
         var regex4  = new RegExp(timezoneReplaceStr,"g");
         var regex5  = new RegExp(marketReplaceStr,"g");
@@ -430,9 +479,9 @@ $(function(){
                 key = marketReplaceStr;
             else{
                 alert(`A specific attribute was not included in the template. Problem in line ${index}:\n\n${line}`);
-                console.log(`Please make sure every line one of the following formats:
-                ** key ** value
-                `` key `` value`);
+                console.log(`Please make sure every line one of the following formats:`+
+                "\n** key ** value"+
+                "\n`` key `` value");
                 return null;
             }
             //console.log('line is'+line+'here');
@@ -506,7 +555,8 @@ $(function(){
     function searchTemplateMatches(object){
         var searchInTitle = true;
         var searchKeys = $search.prop('value').split(' ');
-        var minMatch   = Math.floor(searchKeys.length/2) || 1 ;
+        //var minMatch   = Math.floor(searchKeys.length/2) || 1 ;
+        var minMatch   = Math.floor(searchKeys.length);
 
         //console.log('search keys',searchKeys)
         //console.log('min match', minMatch);
@@ -586,6 +636,21 @@ $(function(){
     }
 
     function copyElementData(element, needsConversion){
+        
+        if (!$incident_textbox.val()){
+            alert ('In order to copy you need to include the ticket');
+            return;
+        }
+        
+        if ( $starttime_checkbox.prop('checked') && (!$startdate_input.val()|| !$starttime_input.val())){
+            alert ('CANNOT COPY: Please check start date/time');
+            console.log($startdate_input.val(), $starttime_input.val())
+            return;
+            }
+        
+        if ( $endtime_checkbox.prop('checked') && (!$enddate_input.val()|| !$endtime_input.val()))
+            alert ('CANNOT COPY: Please check end date/time');
+        
         var copy = ''
 
         // update copy element
@@ -599,7 +664,7 @@ $(function(){
             .replace(/\n{3,}/g,'\n\n')
             .replace(/``(.*)``.*/g,'')
         }else
-            copy = element.value;
+            copy = $incident_textbox.val()+' '+element.value;
        
         navigator.clipboard.writeText(copy).then(function() {
           /* clipboard successfully set */
@@ -639,7 +704,7 @@ $(function(){
                 str += '\n'+ temp[i]['key'] + temp[i]['value']+ '\n';
         }
         
-        str += '\n'+"__ID:__ " + temp[header].ID+'\n';
+        str += '\n'+"``ID:``" + temp[header].ID+'\n';
         console.log(titlestr,str)
         template_textArea_title.value   = titlestr;
         template_textArea.value         = str;
@@ -661,8 +726,49 @@ $(function(){
     }
 
     function editTemplate(id){
-        console.log('Editing '+id);
-        // document.getElementById('page6').click();
+        var str = '';
+        
+        temp = templates.filter(x=>{
+            if (x[header].ID == id)
+                return true;
+            return false;
+        })[0];
+        
+        $name_inputTxt.prop('value', temp[header].name);
+        $urgency_inputTxt.prop('value', temp[header].urgency);
+        
+        if (temp[header].location)
+            $location_inputTxt.prop('value', temp[header].location);
+        if (temp[header].type)
+            $location_inputTxt.prop('value', temp[header].type);
+        
+        if(temp[marketReplaceStr]){
+            if((/EU/g).test(temp[marketReplaceStr].value))
+                $('#page4-eu-rb').prop('checked',true);
+            else
+                $('#page4-us-rb').prop('checked',true);
+        }
+        editingTemp = id;
+        editing     = true;
+        document.getElementById('page4').click();
+
+        $save_btn.removeClass('hidden');
+        $create_btn.addClass('hidden');
+        $page4_header.html(edit_header);
+        
+        for (var i =1; i<temp.length;i++){
+            str += '\n'+temp[i].key + temp[i].value+'\n'
+        }
+        
+        $temp_textArea_create.val(str);
+        updateNewTemplateTitle();
+    }
+
+    function revertChanges(){
+        editing = false;
+        $save_btn.addClass('hidden');
+        $create_btn.removeClass('hidden');
+        $page4_header.html(save_header);
     }
         
     template_textArea.value = '\n'+timezoneReplaceStr+'\n\n'+marketReplaceStr+'\n';
@@ -670,6 +776,6 @@ $(function(){
     updateTextDiv();
     clearNewTemplateData();
     // for development
-    document.getElementById('page4').click();
+    document.getElementById('page2').click();
 
 })
