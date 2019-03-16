@@ -14,7 +14,6 @@ $(function(){
     let templates               = [];
     let lastTemplateID          = 0;
     let results                 = [];
-    let matchResults            = [];
     let edit_header             = 'edit template'
     let save_header             = 'new templates'
     let editing                 = false;
@@ -42,7 +41,6 @@ $(function(){
     const $search               = $page2.find('#search');
     const $searchResults        = $page2.find('#search-results');
     const $incident_textbox     = $page2.find('#incident-txtbox');
-    //const copyToClipboard       = document.getElementById('copy-to-clipboard');
 
         // cache page 3
     const $loadFile             = $page3.find('#load');
@@ -74,6 +72,7 @@ $(function(){
     
     $page2.find(".editing-item").hide();
 
+    // updates the live search list
     $search.on('keyup',(event)=>{
         $searchResults.html('')
         if(!$search.prop('value'))
@@ -81,18 +80,16 @@ $(function(){
         results = templates.filter(searchTemplateMatches)
         results.forEach(x=>{
             $searchResults.append(`<li><a href="#" class="list-item-search-result" id="${x[header]['ID']}"> ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']}</a> </li>`)
-            // $searchResults.append(`<a href="#" class="list-item-search-result" id="${x[header]['ID']}" ><li > ${x[header]['name']} ${x[header]['urgency']} ${x[header]['location']} ${x[header]['type']} </li> </a>`)
         });
     })
     
+    // click action for all list items in the live search bar
     $searchResults.on('click','.list-item-search-result',(event)=>{
         var temp, str='', titlestr='';
         var regex1 = new RegExp(timezoneReplaceStr,"g");
         var regex3 = new RegExp(marketReplaceStr,'g');
         var regex2 = /[-_]{3,}/;
 
-        //console.log(regex1, regex3)
-        
         $search.prop('value','');
         $searchResults.html('');
         
@@ -110,10 +107,10 @@ $(function(){
         if(temp[header].type)
             titlestr += ' - '+ temp[header].type;
 
-        //textdata starts in 1
+        /*  textdata starts in 1
+            Template[0] = Template[header] contains title data and template ID
+        */
         for (var i = 1; i<temp.length;i++){
-            //console.log('key',temp[i]['key']);
-
             if ( regex1.test(temp[i]['key']) || regex2.test(temp[i]['key']) )
                 str += '\n'+ temp[i]['key'] + '\n';
             else if(regex3.test(temp[i]['key'])){
@@ -125,20 +122,18 @@ $(function(){
         }
         
         str += '\n'+"``ID:`` " + temp[header].ID+'\n';
-
         template_textArea_title.value   = titlestr;
         template_textArea.value         = str;
         updateTextDiv();
-
     });
 
+    // header bar (top menu) link configuration
     $('.menu-link').on('click',element=>{
         var id = "#main-page-"+element.target.id.slice(4);
         $('.main-page').addClass('hidden');
         $(id).removeClass('hidden');
         if(editing)
             revertChanges();
-        
         if(id=="#main-page-3"){
             $templateList_div.html('');
             templates.forEach(updateTemplateList);
@@ -160,8 +155,6 @@ $(function(){
     
     $page2.find('.input-datetime').on('input',x=> updateTextDiv());
     $page2.find('.input-market').on('input',x=> updateTextDiv());
-    // $page2.find('.input-datetime').on('change',x=> console.log('I changed!'));
-    $page2.find('#template-textarea').on('change',x=> console.log('textarea changed'))
 
     $page2.find('.current-time').on('click', x=>{
         var [date, time] = getTimeNow(true);
@@ -173,10 +166,8 @@ $(function(){
             $enddate_input.prop('value',date);
             $endtime_input.prop('value',time);
         }
-        
         updateTextDiv();
     });
-
 
     template_div.addEventListener('click',x=>{
         copyElementData(template_textArea, true);
@@ -185,8 +176,8 @@ $(function(){
     template_div_title.addEventListener('click',x=>{
         copyElementData(template_textArea_title, false);
     })
-      // page 3 Event handlers
-      
+    
+    // page 3 Event handlers  
     $page3.find('#print').on('click',()=> console.log(templates))
     
     $templateList_div.on('click','.page3-line-btn',(event)=>{
@@ -201,7 +192,6 @@ $(function(){
     })
 
     $loadFile.on('click',()=>{
-        // console.log('clicked!')
         $loadFile.prop('value',"");
     })
     
@@ -210,8 +200,7 @@ $(function(){
         var fileData    = new FileReader();
         
         if(!inputFile)
-            return;
-        
+            return;        
         if (inputFile.type !== 'application/json'){
             alert('ERROR: Wrong type of file!. Data should be stored in a .json file')
             return
@@ -251,8 +240,6 @@ $(function(){
         var old_templates, prev_temp;
         var id          = editingTemp;
         
-        console.log(templates.length);
-        
         templates = templates.filter(x=>{
             if (x[header].ID == id){
                 prev_temp = x;
@@ -260,13 +247,10 @@ $(function(){
             }
             return true;
         });
-        console.log(templates.length);
         
         if(!createEditTemplate(event, id))
             templates.push(prev_temp);
         
-        console.log(templates.length);
-        //revertChanges();
     })
     
     $create_btn.on('click', (event)=>{
@@ -305,13 +289,11 @@ $(function(){
     })
 
     $('#main-page-4').find('.market-radio-btn').on('click',x=>{
-        var thisMarket = x.target.value;
-        var regex = new RegExp(marketReplaceStr+'.*',"g");
-        // console.log(regex)
-        var val     = $temp_textArea_create.prop('value');
-        var newVal  =  marketReplaceStr+" "+thisMarket;
+        var thisMarket  = x.target.value;
+        var regex       = new RegExp(marketReplaceStr+'.*',"g");
+        var val         = $temp_textArea_create.prop('value');
+        var newVal      =  marketReplaceStr+" "+thisMarket;
         $temp_textArea_create.prop('value',val.replace(regex,newVal));
-            
     })
 
     $page2.find('.page2-choose-market').on('click', x=> {
@@ -321,18 +303,13 @@ $(function(){
 
     // functions
     function inputToString(message_label,date_input_element, time_input_element){
-        // var input_to_date = '';
-        var datestr       = '';
-        // var timestr       = '';  
-
+        var datestr             = '';
         var [year, month, day]  = [...(date_input_element.prop('value')).split('-')];
         var [hour, min]         = [...(time_input_element.prop('value')).split(':')];
         
         var period  = (parseInt(hour)>11)? "PM":"AM";
         hour        = (parseInt(hour) % 12);
         hour        = (hour<10)? "0"+hour : hour.toString();
-
-        //console.log(hour,min,period)
 
         if(market==='US'){
             return `\n${message_label} ${month}/${day}/${year} ${hour}:${min} ${period} ET\n`
@@ -349,7 +326,6 @@ $(function(){
         var year    = timenow.getFullYear();
         var month   = timenow.getMonth();
         var day     = timenow.getDate();
-        //console.log(day)
         
         month   = (month<10)?"0"+month:month ;
         day     = (day<10)?"0"+day:day ;
@@ -379,17 +355,13 @@ $(function(){
             timestamp+= inputToString(startTimeStr, $startdate_input, $starttime_input);
         if($endtime_checkbox.prop('checked'))
             timestamp+= inputToString(endTimeStr, $enddate_input, $endtime_input);
-        // console.log(timestamp);
         return timestamp;
     }
     
     function getUpdatedMarket(){
-        //console.log($market_checkbox.prop('checked'))
-
         var marketReturnStr = '';
         if($market_checkbox.prop('checked'))
             marketReturnStr = marketStr+" "+market;  
-
         return marketReturnStr;
     }
 
@@ -436,7 +408,7 @@ $(function(){
     function addTitlePropsToObject(...$args){
         var [templateArr, ...$inputs]  = [...$args];
         
-        var prop       = {};
+        var prop           = {};
         
         $inputs.forEach(input=>{
             var key        = input.prop('id');
@@ -484,7 +456,6 @@ $(function(){
                 "\n`` key `` value");
                 return null;
             }
-            //console.log('line is'+line+'here');
 
             prop['key']             = key;
             prop['value']           = line.slice(key.length);
@@ -535,7 +506,6 @@ $(function(){
         })
 
         if (match.length){
-            // console.log('Template IDs that match the current template: ',match);      
             var proceed = confirm("There's already a template that has the same information, Do you still want to add this template?");
             if (!proceed)
                 return false;
@@ -554,15 +524,33 @@ $(function(){
 
     function searchTemplateMatches(object){
         var searchInTitle = true;
-        var searchKeys = $search.prop('value').split(' ');
+        var searchKeys  = $search.prop('value').split(' ');
         //var minMatch   = Math.floor(searchKeys.length/2) || 1 ;
-        var minMatch   = Math.floor(searchKeys.length);
+        var minMatch    = Math.floor(searchKeys.length);
+        var regex,count = 0;
 
-        //console.log('search keys',searchKeys)
-        //console.log('min match', minMatch);
+        var values = Object.values(object[header]);
 
-        var count =0;
-        var regex;
+        // combination of the methods below, searches for a match keyword in both the title and body
+        for(var i =0; i<searchKeys.length;i++){
+            regex = new RegExp(searchKeys[i],"i");
+            if(searchInTitle && regex.test(values)){
+                count++;
+                continue;
+            }else{
+                for(var j=1; j<object.length;j++){
+                    if(regex.test(object[j]['value'])){
+                        count++;
+                        break;
+                    }
+                }
+            }
+        }
+        if (count>=minMatch)
+            return true;
+        return false;
+        
+        /*
         for(var i =0; i<searchKeys.length;i++){
             regex = new RegExp(searchKeys[i],"i")
             for(var j=1; j<object.length;j++){
@@ -583,20 +571,17 @@ $(function(){
                 }
             }
         }
+        */
 
-        if (count>=minMatch)
-            return true;
-        return false;
     }
 
-    function updateTemplateList(template){
-                                                                                                      
+    function updateTemplateList(template){                                                                          
         var tempIdStr; 
         var tempId          =   template[header].ID;
         var tempTitle       =   template[header]['name']        + ' ' +
                                 template[header]['urgency']     + ' - ' +
                                 template[header]['location'];
-                                
+
         if (template[header]['type'])
             tempTitle+=' - '+template[header]['type'];
         tempTitle += '  ('+template[header][marketReplaceStr]+')';
@@ -667,9 +652,9 @@ $(function(){
             copy = $incident_textbox.val()+' '+element.value;
        
         navigator.clipboard.writeText(copy).then(function() {
-          /* clipboard successfully set */
+          /* copied successfully */
         }, function() {
-          /* clipboard write failed */
+          /* failed to copy to clipboard */
         });
     }
     
@@ -772,10 +757,8 @@ $(function(){
     }
         
     template_textArea.value = '\n'+timezoneReplaceStr+'\n\n'+marketReplaceStr+'\n';
-    
+
     updateTextDiv();
     clearNewTemplateData();
-    // for development
     document.getElementById('page2').click();
-
 })

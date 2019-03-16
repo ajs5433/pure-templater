@@ -20,8 +20,6 @@ body,html{
     box-sizing: border-box;
     margin:0;
     padding:0;
-    /* transition: all 1.5s ease-in; */
-    /* border: solid 1px red; */
 }
 
 *{
@@ -43,25 +41,17 @@ a, a:visited{
 a:hover{
     color: darkgray;
     font-weight: 600;
-    /* background-color:rgb(0,0,0,0.2); */
 }
 
 textarea{
     resize:none;
 }
 
-
-
 /* ---------------------- MAIN DIV -----------------------*/
-/*
-#page{
-    width: 100vw;
-    height:100vh;
-}*/
 
 #top{
-    top: 0; /*I dont get why it is necessary*/
-    left:0; /*I dont get why it is necessary*/
+    top: 0; 
+    left:0; 
     position: fixed;
     height:var(--top-height);
     width:100%; 
@@ -96,13 +86,11 @@ textarea{
     height: 100vh;
     top: 0;
     bottom: 0;
-    /* width: auto; */
     display: flex;
     /* overflow-x: scroll; */
 }
 
 .main-page{
-    /* width: 100vw; */
     height: 100%;
     flex: 0 0 100%;
 }
@@ -120,7 +108,6 @@ textarea{
     flex:0 1 10rem;
     padding-top:45px;
 }
-
 
 #search{
     min-width:var(--search-bar-width);
@@ -190,14 +177,6 @@ textarea{
     cursor:pointer;
 }
 
-/*
-#page2-secondarycontent{
-    border: solid 1px var(--border-color);
-    padding: 10px;
-    margin: 0 20px;
-    border-radius: 10px;
-}
-*/
 .datetime-box{
     margin: 20px 0;
     padding: 10px;
@@ -236,14 +215,12 @@ textarea{
     font-size: 12px;
 }
 
-
 @media (max-width: 560px){
     .template-area{
         height: 200px;
         overflow-y:scroll;
     }
 }
-
 
 .page2-btn{
     padding: 10px;
@@ -252,8 +229,6 @@ textarea{
     color: black;
     font-size: 14px;
 }
-
-
 
 #slider{
     border: solid 1px black;
@@ -265,19 +240,6 @@ textarea{
 .slider-btn{
     padding: 3px 10px;
 }
-
-/*
-.template-area{
-    display: block;
-    resize:none;
-    width:400px;
-    height: 80%;
-    font-size:12px;
-    font-weight: 100;
-    overflow-y: scroll;
-}
-
-*/
 
 /* Page 3*/
 #page3-main{
@@ -298,7 +260,6 @@ textarea{
     padding: 10px;
     flex: 1 1 450px;
     max-width: 100%;
-
     display: flex;
     flex-direction: column;
     overflow: scroll;
@@ -335,8 +296,6 @@ textarea{
 
 #page4-form{
     margin: 0 15px;
-    /* padding-top: 30px; */
-    /* background:red; */
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -345,7 +304,6 @@ textarea{
     display: flex;
     flex-direction: column;
     flex: 0 1 auto;
-    /* margin: 20px; */
     border: solid 1px gray;
 }
 
@@ -357,9 +315,7 @@ textarea{
     display: block;
     line-height: 20px;
     font-size: 14px;
-    /* height: 30px; */
 }
-
 
 .list-item-search-result{
     width: 100%;
@@ -367,4 +323,3 @@ textarea{
 .hidden{
     display:none !important;
 }
-
